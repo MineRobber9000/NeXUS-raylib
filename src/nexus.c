@@ -16,13 +16,13 @@
 #include "eightbitcolor.h"
 #include "lua_api.h"
 #include "nexus.h"
-#include "cart.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
 
 Font font = { 0 };
+Cart *cart;
 
 //----------------------------------------------------------------------------------
 // Local Variables Definition (local to this module)
@@ -66,7 +66,7 @@ int main(void)
     InitLua();
 
     // Load nogameloaded.rom and load the code into the VM
-    Cart *cart = LoadCart("resources/nogameloaded.rom");
+    cart = LoadCart("resources/nogameloaded.rom");
     LoadString(cart->code,cart->code_size);
     DoCall(0,0);
 
@@ -86,6 +86,7 @@ int main(void)
     // Unload global data loaded
     UnloadFont(font);
     UnloadRenderTexture(framebuffer);
+    FreeCart(cart);
     CloseLua();
 
     CloseWindow();          // Close window and OpenGL context

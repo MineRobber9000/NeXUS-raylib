@@ -1,9 +1,11 @@
 #include "raylib.h"
 #include "cart.h"
+#include "eightbitcolor.h"
 #include "riff.h"
 #include <string.h>
 
 FourCC _CODE = {'C','O','D','E'};
+FourCC _GRPH = {'G','R','P','H'};
 
 void CartChunkWalker(Cart *cart, RIFF_Chunk *chunk)
 {
@@ -25,6 +27,31 @@ void CartChunkWalker(Cart *cart, RIFF_Chunk *chunk)
                 cart->code_size += chunk->size;
             }
         }
+        if (riff_fourcc_equals(chunk->type,_GRPH)) {
+            uint32_t id = ((uint32_t*)chunk->contains.data)[0];
+            uint32_t width = ((uint32_t*)chunk->contains.data)[1];
+            uint32_t height = ((uint32_t*)chunk->contains.data)[2];
+            if ((width*height)>(chunk->size-12)) {
+                TraceLog(LOG_WARNING, "CART: Truncated graphics chunk; will read all the pixels I can");
+            }
+            Image img = GenImageColor(width, height, (Color){255,0,255,255});
+            int x = 0;
+            int y = 0;
+            for (int i=12;i<chunk->size;++i) {
+                ImageDrawPixel(&img, x, y, eightbitcolor_LUT[chunk->contains.data[i]&0xFF]);
+                if ((++x)==width) {
+                    x = 0;
+                    ++y;
+                }
+            }
+            Cart_GraphicsPage *grph = MemAlloc(sizeof(Cart_GraphicsPage));
+            grph->id = id;
+            grph->width = width;
+            grph->height = height;
+            grph->img = img;
+            grph->next = cart->graphics;
+            cart->graphics = grph;
+        }
     }
 }
 
@@ -43,5 +70,17 @@ Cart *LoadCart(char * filename)
     } else {
         CartChunkWalker(ret,chunk);
     }
+    riff_free_chunk(chunk);
     return ret;
+}
+
+void FreeGraphics(Cart_GraphicsPage *page) {
+    if (page->next) FreeGraphics(page->next);
+    UnloadImage(page->img);
+    MemFree(page);
+}
+
+void FreeCart(Cart *cart) {
+    MemFree(cart->code);
+    FreeGraphics(cart->graphics);
 }
