@@ -61,7 +61,7 @@ int main(void)
 
     // Lua
     InitLua();
-    const char * prog = "function doframe() cls(160) print('THIS IS TEXT ON THE SCREEN FROM LUA',80,120-8) end";
+    const char * prog = "s='THIS IS TEXT ON THE SCREEN FROM LUA' function doframe() cls(160) print(s,160-math.floor(textwidth(s)/2),120-8) end";
     LoadString(prog, strlen(prog));
     DoCall(0,0);
 
