@@ -67,7 +67,7 @@ struct NeXUS_API api_funcs[] = {
     {api_cls, "cls"},
     {api_print, "print"},
     {api_textwidth, "textwidth"},
-    {api_version, "version"}
+    {api_version, "version"},
     {0, 0}
 };
 
