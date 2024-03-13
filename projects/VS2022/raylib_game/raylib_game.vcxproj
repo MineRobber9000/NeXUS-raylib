@@ -351,6 +351,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\cart.c" />
     <ClCompile Include="..\..\..\src\eightbitcolor.c" />
     <ClCompile Include="..\..\..\src\lua\lapi.c" />
     <ClCompile Include="..\..\..\src\lua\lauxlib.c" />
