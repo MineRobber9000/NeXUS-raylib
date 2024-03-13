@@ -6,6 +6,7 @@
 
 FourCC _CODE = {'C','O','D','E'};
 FourCC _GRPH = {'G','R','P','H'};
+FourCC _BIN = {'B', 'I', 'N', ' '};
 
 void CartChunkWalker(Cart *cart, RIFF_Chunk *chunk)
 {
@@ -52,6 +53,16 @@ void CartChunkWalker(Cart *cart, RIFF_Chunk *chunk)
             grph->next = cart->graphics;
             cart->graphics = grph;
         }
+        if (riff_fourcc_equals(chunk->type,_BIN)) {
+            uint32_t id = ((uint32_t*)chunk->contains.data)[0];
+            Cart_Blob *blob = MemAlloc(sizeof(Cart_Blob));
+            blob->id = id;
+            blob->size = chunk->size - 4;
+            blob->data = MemAlloc(blob->size);
+            memcpy(blob->data,chunk->contains.data+4,blob->size);
+            blob->next = cart->blobs;
+            cart->blobs = blob;
+        }
     }
 }
 
@@ -71,6 +82,7 @@ Cart *LoadCart(char * filename)
         CartChunkWalker(ret,chunk);
     }
     riff_free_chunk(chunk);
+    UnloadFileData(data);
     return ret;
 }
 
@@ -80,7 +92,14 @@ void FreeGraphics(Cart_GraphicsPage *page) {
     MemFree(page);
 }
 
+void FreeBlobs(Cart_Blob *blob) {
+    if (blob->next) FreeBlobs(blob->next);
+    MemFree(blob->data);
+}
+
 void FreeCart(Cart *cart) {
-    MemFree(cart->code);
-    FreeGraphics(cart->graphics);
+    if (cart->code) MemFree(cart->code);
+    if (cart->graphics) FreeGraphics(cart->graphics);
+    if (cart->blobs) FreeBlobs(cart->blobs);
+    MemFree(cart);
 }

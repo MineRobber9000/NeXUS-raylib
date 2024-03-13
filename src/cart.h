@@ -12,10 +12,20 @@ struct Cart_GraphicsPage {
 
 typedef struct Cart_GraphicsPage Cart_GraphicsPage;
 
+struct Cart_Blob {
+	uint32_t id;
+	uint32_t size;
+	uint8_t *data;
+	struct Cart_Blob *next;
+};
+
+typedef struct Cart_Blob Cart_Blob;
+
 typedef struct {
 	unsigned char *code;
 	size_t code_size;
 	Cart_GraphicsPage *graphics;
+	Cart_Blob *blobs;
 } Cart;
 
 Cart *LoadCart(char * filename);
