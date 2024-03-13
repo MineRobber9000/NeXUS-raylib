@@ -16,6 +16,7 @@
 #include "eightbitcolor.h"
 #include "lua_api.h"
 #include "nexus.h"
+#include <string.h>
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -29,6 +30,8 @@ Font font = { 0 };
 static const int screenWidth = 320;
 static const int screenHeight = 240;
 static const int scale = 3;
+
+static int ShouldDrawFPS = 0;
 
 static RenderTexture2D framebuffer;
 
@@ -101,6 +104,11 @@ static void UpdateDrawFrame(void)
         }
         UnloadDroppedFiles(files);
     }
+    int ctrlDown = IsKeyDown(KEY_LEFT_CONTROL)||IsKeyDown(KEY_RIGHT_CONTROL);
+    if (ctrlDown && IsKeyPressed(KEY_F)) {
+        if (ShouldDrawFPS) ShouldDrawFPS = 0;
+        else ShouldDrawFPS = 1;
+    }
     BeginTextureMode(framebuffer);
 
         // ClearBackground(eightbitcolor_LUT[160]);
@@ -116,11 +124,11 @@ static void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     BeginDrawing();
 
-	    ClearBackground((Color){255,0,255,255});
+        ClearBackground((Color){255,0,255,255});
 
         DrawTexturePro(framebuffer.texture,(Rectangle){0,0,(float)screenWidth,(float)-screenHeight},(Rectangle){0,0,(float)screenWidth*scale,(float)screenHeight*scale},(Vector2){0,0},0,WHITE);
 
-        _DrawFPS();
+        if (ShouldDrawFPS) _DrawFPS();
 
     EndDrawing();
     //----------------------------------------------------------------------------------
