@@ -23,7 +23,7 @@ void nullify(const char * global)
 }
 
 struct NeXUS_API {
-    lua_CFunction *func;
+    lua_CFunction func;
     const char * name;
 };
 
