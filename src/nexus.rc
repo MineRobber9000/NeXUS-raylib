@@ -9,13 +9,13 @@ BEGIN
 	//BLOCK "080904E4" 	// English UK
     BLOCK "040904E4"	// English US
     BEGIN
-	  VALUE "CompanyName", "raylib technologies"
-      VALUE "FileDescription", "raylib-game | A great game template to enjoy coding"
+	  VALUE "CompanyName", "MineRobber9000"
+      VALUE "FileDescription", "NeXUS | A fantasy console"
       VALUE "FileVersion", "1.0"
-      VALUE "InternalName", "raylib-game"
-      VALUE "LegalCopyright", "(c) 2022 raylib technologies (@raylibtech)"
+      VALUE "InternalName", "nexus"
+      VALUE "LegalCopyright", "(c) 2024 minerobber"
       //VALUE "OriginalFilename", "raylib_app.exe"
-      VALUE "ProductName", "raylib-game"
+      VALUE "ProductName", "NeXUS"
       VALUE "ProductVersion", "1.0"
     END
   END
