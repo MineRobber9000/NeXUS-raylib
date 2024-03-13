@@ -16,6 +16,7 @@
 #include "eightbitcolor.h"
 #include "lua_api.h"
 #include "nexus.h"
+#include "riff.h"
 #include <string.h>
 
 #if defined(PLATFORM_WEB)
@@ -35,11 +36,14 @@ static int ShouldDrawFPS = 0;
 
 static RenderTexture2D framebuffer;
 
+static FourCC _CODE = {'C','O','D','E'};
+
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
 static void UpdateDrawFrame(void);          // Update and draw one frame
 static void _DrawFPS(void);                 // Draw FPS
+static void LoadCart(RIFF_Chunk *chunk);    // Load cart from RIFF chunks
 
 //----------------------------------------------------------------------------------
 // Main entry point
@@ -64,9 +68,21 @@ int main(void)
 
     // Lua
     InitLua();
-    const char * prog = "s='THIS IS TEXT ON THE SCREEN FROM LUA' function doframe() cls(160) print(s,160-math.floor(textwidth(s)/2),120-8) end";
-    LoadString(prog, strlen(prog));
-    DoCall(0,0);
+
+    // Load nogameloaded.rom and load the code into the VM
+    int len;
+    unsigned char *data = LoadFileData("resources/nogameloaded.rom",&len);
+    TraceLog(LOG_INFO,"CART: Loaded cart file, %d bytes",len);
+    size_t offset = 0;
+    RIFF_Chunk *cart = riff_parse_chunk_from_data(data,(size_t)len,&offset);
+    if (cart==NULL) {
+        TraceLog(LOG_ERROR, "CART: Error loading cart: %s", riff_get_error());
+        char *error = "function doframe() cls(7) print('error loading cart') end";
+        LoadString(error,strlen(error));
+        DoCall(0,0);
+    } else {
+        LoadCart(cart);
+    }
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -146,4 +162,23 @@ static void _DrawFPS(void)
     else if (fps < 15) color = RED;             // Low FPS
 
     DrawTextEx(font, TextFormat("FPS: %2i", fps), (Vector2){1, 1}, 45, 0, color);
+}
+
+//----------------------------------------------------------------------------------
+// Load cart from RIFF chunks
+//----------------------------------------------------------------------------------
+static void LoadCart(RIFF_Chunk *chunk)
+{
+    if (riff_is_container(chunk->type)) {
+        RIFF_ChunkListItem *walker = chunk->contains.chunks;
+        while (walker!=NULL) {
+            LoadCart(walker->chunk);
+            walker=walker->next;
+        }
+    } else {
+        if (riff_fourcc_equals(chunk->type,_CODE)) {
+            LoadString(chunk->contains.data,chunk->size);
+            DoCall(0,0);
+        }
+    }
 }

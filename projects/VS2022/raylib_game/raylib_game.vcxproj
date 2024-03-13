@@ -386,6 +386,7 @@
     <ClCompile Include="..\..\..\src\lua\lzio.c" />
     <ClCompile Include="..\..\..\src\lua_api.c" />
     <ClCompile Include="..\..\..\src\nexus.c" />
+    <ClCompile Include="..\..\..\src\riff.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\eightbitcolor.h" />
