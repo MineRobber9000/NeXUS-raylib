@@ -141,10 +141,13 @@ int CallGlobal(char * global)
 {
     if (lua_getglobal(L, global)==LUA_TFUNCTION) {
         if (DoCall(0,0)!=LUA_OK) {
-            TraceLog(LOG_ERROR,lua_tostring(L,-1)); // TODO: this should take you into the error screen
+            const char *msg = lua_tostring(L,-1);
+            TraceLog(LOG_ERROR,msg); // TODO: this should take you into the error screen
             lua_pop(L,1);
         }
         return 1;
+    } else {
+        lua_pop(L,1);
     }
     return 0;
 }
