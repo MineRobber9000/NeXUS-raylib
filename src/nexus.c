@@ -32,8 +32,6 @@ static const int scale = 3;
 
 static int ShouldDrawFPS = 0;
 
-static RenderTexture2D framebuffer;
-
 //----------------------------------------------------------------------------------
 // Local Functions Declaration
 //----------------------------------------------------------------------------------
@@ -55,8 +53,8 @@ int main(void)
     SetTextLineSpacing(16);
 
     // Framebuffer
-    framebuffer = LoadRenderTexture(screenWidth, screenHeight);
-    SetTextureFilter(framebuffer.texture, TEXTURE_FILTER_POINT);
+    vm.framebuffer = LoadRenderTexture(screenWidth, screenHeight);
+    SetTextureFilter(vm.framebuffer.texture, TEXTURE_FILTER_POINT);
 
     // Eight bit color
     eightbitcolor_init();
@@ -84,9 +82,10 @@ int main(void)
 
     // Unload global data loaded
     UnloadFont(vm.font);
-    UnloadRenderTexture(framebuffer);
+    UnloadRenderTexture(vm.framebuffer);
     FreeCart(vm.cart);
     CloseLua();
+    if (vm.screen.data!=NULL) UnloadImage(vm.screen);
 
     CloseWindow();          // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
@@ -122,8 +121,11 @@ static void UpdateDrawFrame(void)
     }
     if ((ctrlDown && IsKeyPressed(KEY_R)) // reset ROM (^R)
         || loaderWantsAReset) {
-        BeginTextureMode(framebuffer);
+        BeginTextureMode(vm.framebuffer);
             ClearBackground(eightbitcolor_LUT[0]);
+            if (HAS_SCREEN()) {
+                ImageClearBackground(&vm.screen, eightbitcolor_LUT[0]);
+            }
         EndTextureMode();
         CloseLua();
         InitLua();
@@ -134,7 +136,7 @@ static void UpdateDrawFrame(void)
             lua_pop(L,1);
         }
     }
-    BeginTextureMode(framebuffer);
+    BeginTextureMode(vm.framebuffer);
 
         // ClearBackground(eightbitcolor_LUT[160]);
 
@@ -151,7 +153,7 @@ static void UpdateDrawFrame(void)
 
         ClearBackground((Color){255,0,255,255});
 
-        DrawTexturePro(framebuffer.texture,(Rectangle){0,0,(float)screenWidth,(float)-screenHeight},(Rectangle){0,0,(float)screenWidth*scale,(float)screenHeight*scale},(Vector2){0,0},0,WHITE);
+        DrawTexturePro(vm.framebuffer.texture,(Rectangle){0,0,(float)screenWidth,(float)-screenHeight},(Rectangle){0,0,(float)screenWidth*scale,(float)screenHeight*scale},(Vector2){0,0},0,WHITE);
 
         if (ShouldDrawFPS) _DrawFPS();
 

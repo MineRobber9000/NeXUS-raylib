@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "eightbitcolor.h"
+#include "rlgl.h"
 #include "lua_api.h"
 
 lua_State *L;
@@ -33,6 +34,7 @@ int api_cls(lua_State *L)
 {
     uint8_t color = luaL_optinteger(L,1,0)&0xFF;
     ClearBackground(eightbitcolor_LUT[color]);
+    if (HAS_SCREEN()) ImageClearBackground(&vm.screen, eightbitcolor_LUT[color]);
     return 0;
 }
 
@@ -40,8 +42,43 @@ int api_pix(lua_State *L)
 {
     int64_t x = luaL_checkinteger(L,1);
     int64_t y = luaL_checkinteger(L,2);
-    uint8_t c = luaL_checkinteger(L,3)&0xFF;
-    DrawPixel(x, y, eightbitcolor_LUT[c]);
+    // THIS FUNCTION IS VERY HACKY
+    // It may not be performant, you probably shouldn't be doing this
+    // In the original NeXUS  (LOVE2D) we had an imagedata that we carried
+    // until something caused it to become invalid
+    // reads were chonky, writes were also chonky for some godforsaken reason
+    // We should be better off here but who knows
+    // At the very least some graphics operations can update the image like
+    // they would the screen here
+    // (we couldn't do that in LOVE2D)
+    // still is probably a good idea to do all your reads in one go
+    // though pixel writes shouldn't invalidate the screen
+    // (they didn't in LOVE2D either but writes were still chonky)
+    if (lua_isnoneornil(L,3)) {
+        if (NO_SCREEN()) {
+            if (vm.screen.data==NULL) { // no screen data - pull down image
+                // LoadImageFromTexture sets the important bits
+                vm.screen = LoadImageFromTexture(vm.framebuffer.texture);
+            } else { // screen dirty - pull pixels
+                MemFree(vm.screen.data);
+                // yeah this one's a doozy
+                // basically we're doing what LoadImageFromTexture does
+                // which means we directly invoke rlgl
+                vm.screen.data = rlReadTexturePixels(vm.framebuffer.texture.id, vm.framebuffer.texture.width, vm.framebuffer.texture.height, vm.framebuffer.texture.format);
+            }
+        }
+        // we now have a representation of the screen which we can trust in vm.screen
+        Color c = GetImageColor(vm.screen, x, y);
+        lua_pushinteger(L,eightbitcolor_nearest(c));
+        return 1;
+    } else {
+        uint8_t c = luaL_checkinteger(L,3)&0xFF;
+        DrawPixel(x, y, eightbitcolor_LUT[c]);
+        // if we have a screen and it isn't dirty, keep it up to date
+        // if it's not there, we get null pointer references
+        // if it's dirty, there's no point-- we'll pull it down next read anyways!
+        if (HAS_SCREEN()) ImageDrawPixel(&vm.screen, x, y, eightbitcolor_LUT[c]);
+    }
     return 0;
 }
 
@@ -53,6 +90,7 @@ int api_print(lua_State *L)
     int y = luaL_optinteger(L,3,0);
     uint8_t color = luaL_optinteger(L,4,0xFF)&0xFF; // default white text
     DrawTextEx(vm.font, str, (Vector2){x, y}, 15, 0, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
     return 0;
 }
 
