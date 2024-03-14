@@ -214,6 +214,7 @@ int api_spr(lua_State *L)
     if (flip&2) sy*=-1;
     // TODO: should rotate around origin (requires rlgl because of course it does)
     DrawTexturePro(spr->texture,(Rectangle){0,0,spr->img.width,spr->img.height},(Rectangle){0,0,spr->img.width*sx,spr->img.height*sy},(Vector2){x,y},0,WHITE);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen? probably not in this case
     return 0;
 }
 
@@ -235,6 +236,7 @@ int api_tri(lua_State *L)
     double y3 = luaL_checknumber(L, 6);
     uint8_t color = luaL_checkinteger(L, 7)&0xFF;
     DrawTriangle((Vector2){x1, y1}, (Vector2){x2, y2}, (Vector2){x3, y3}, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
     return 0;
 }
 
@@ -248,6 +250,7 @@ int api_trib(lua_State *L)
     double y3 = luaL_checknumber(L, 6);
     uint8_t color = luaL_checkinteger(L, 7)&0xFF;
     DrawTriangleLines((Vector2){x1, y1}, (Vector2){x2, y2}, (Vector2){x3, y3}, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
     return 0;
 }
 
