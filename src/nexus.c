@@ -100,21 +100,39 @@ static void UpdateDrawFrame(void)
 {
     // Update
     //----------------------------------------------------------------------------------
+    int loaderWantsAReset = 0;
     if (IsFileDropped()) {
         FilePathList files = LoadDroppedFiles();
-        for (int i=0;i<files.count;++i) {
-            TraceLog(LOG_INFO, "Dropped file: %s", files.paths[i]);
+        if (files.count==1) {
+            TraceLog(LOG_INFO, "LOADER: Loading %s, deinitialize Lua and previous cart",files.paths[0]);
+            CloseLua();
+            FreeCart(cart);
+            TraceLog(LOG_INFO, "LOADER: Initialize new cart and new Lua");
+            cart = LoadCart(files.paths[0]);
+            InitLua();
+            TraceLog(LOG_INFO, "LOADER: Load and run cart code");
+            LoadString(cart->code,cart->code_size);
+            if (DoCall(0,0)!=LUA_OK) {
+                const char *msg = lua_tostring(L,-1);
+                TraceLog(LOG_INFO, "LOADER: Lua error: %s",msg); // TODO: this should take you into the error screen
+                lua_pop(L,1);
+            }
+            loaderWantsAReset = 1; // set reset flag
+            TraceLog(LOG_INFO,"LOADER: Exit loader (all crashes past this point are NOT our fault)");
+        } else {
+            TraceLog(LOG_INFO, "LOADER: Cowardly refusing to figure out which of %d files to load", files.count);
         }
         UnloadDroppedFiles(files);
     }
     int ctrlDown = IsKeyDown(KEY_LEFT_CONTROL)||IsKeyDown(KEY_RIGHT_CONTROL);
-    if (ctrlDown && IsKeyPressed(KEY_F)) { // toggle FPS counter
+    if (ctrlDown && IsKeyPressed(KEY_F)) { // toggle FPS counter (^F)
         if (ShouldDrawFPS) ShouldDrawFPS = 0;
         else ShouldDrawFPS = 1;
     }
-    if (ctrlDown && IsKeyPressed(KEY_R)) { // reset ROM
+    if ((ctrlDown && IsKeyPressed(KEY_R)) // reset ROM (^R)
+        || loaderWantsAReset) {
         BeginTextureMode(framebuffer);
-            ClearBackground((Color){0});
+            ClearBackground(eightbitcolor_LUT[0]);
         EndTextureMode();
         CloseLua();
         InitLua();
