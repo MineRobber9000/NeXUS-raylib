@@ -103,19 +103,11 @@ static void UpdateDrawFrame(void)
     if (IsFileDropped()) {
         FilePathList files = LoadDroppedFiles();
         if (files.count==1) {
-            TraceLog(LOG_INFO, "LOADER: Loading %s, deinitialize Lua and previous cart",files.paths[0]);
-            CloseLua();
+            TraceLog(LOG_INFO, "LOADER: Loading %s, deinitialize previous cart",files.paths[0]);
             FreeCart(vm.cart);
-            TraceLog(LOG_INFO, "LOADER: Initialize new cart and new Lua");
+            TraceLog(LOG_INFO, "LOADER: Initialize new cart");
             vm.cart = LoadCart(files.paths[0]);
-            InitLua();
-            TraceLog(LOG_INFO, "LOADER: Load and run cart code");
-            LoadString(vm.cart->code,vm.cart->code_size);
-            if (DoCall(0,0)!=LUA_OK) {
-                const char *msg = lua_tostring(L,-1);
-                TraceLog(LOG_INFO, "LOADER: Lua error: %s",msg); // TODO: this should take you into the error screen
-                lua_pop(L,1);
-            }
+            TraceLog(LOG_INFO, "LOADER: Set reset flag so the resetter can do the loading thing");
             loaderWantsAReset = 1; // set reset flag
             TraceLog(LOG_INFO,"LOADER: Exit loader (all crashes past this point are NOT our fault)");
         } else {
@@ -136,7 +128,11 @@ static void UpdateDrawFrame(void)
         CloseLua();
         InitLua();
         LoadString(vm.cart->code,vm.cart->code_size);
-        DoCall(0,0);
+        if (DoCall(0,0)!=LUA_OK) {
+            const char *msg = lua_tostring(L,-1);
+            TraceLog(LOG_INFO, "RESET: Lua error: %s",msg); // TODO: this should take you into the error screen
+            lua_pop(L,1);
+        }
     }
     BeginTextureMode(framebuffer);
 
