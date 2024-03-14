@@ -23,11 +23,6 @@ void nullify(const char * global)
     lua_setglobal(L, global);
 }
 
-struct NeXUS_API {
-    lua_CFunction func;
-    const char * name;
-};
-
 // GRAPHICS
 
 int api_cls(lua_State *L)
@@ -119,6 +114,12 @@ struct NeXUS_API api_funcs[] = {
     {0, 0}
 };
 
+void RegisterFunction(struct NeXUS_API *func)
+{
+    lua_pushcfunction(L,func->func);
+    lua_setglobal(L,func->name);
+}
+
 void InitLua(void)
 {
     // yes I am aware of the Lua Uppercase Accident
@@ -140,8 +141,7 @@ void InitLua(void)
     // load API functions
     // similar run to above
     for (struct NeXUS_API *func = api_funcs; func->func; func++) {
-        lua_pushcfunction(L,func->func);
-        lua_setglobal(L,func->name);
+        RegisterFunction(func);
     }
     // also initialize GC (the Lua interpreter does it so we should too probably)
     lua_gc(L, LUA_GCRESTART);
@@ -149,9 +149,15 @@ void InitLua(void)
     TraceLog(LOG_INFO,"LUA: Lua runtime initialized!");
 }
 
-void LoadString(char * code, size_t len)
+void SetGlobalString(char *name, char *val)
 {
-    luaL_loadbufferx(L, code, len, "[ROM code]", "t");
+    lua_pushstring(L,val);
+    lua_setglobal(L,name);
+}
+
+int LoadString(char * code, size_t len)
+{
+    return luaL_loadbufferx(L, code, len, "=[ROM code]", "t");
 }
 
 // message handler
@@ -172,6 +178,14 @@ int MessageHandler(lua_State *L)
     return 1;  /* return the traceback */
 }
 
+char * CopyString(const char * from)
+{
+    size_t len = strlen(from)+1;
+    char *ret = MemAlloc(len);
+    memcpy(ret, from, len);
+    return ret;
+}
+
 // does the call in protected mode
 // yoinked from lua.c
 int DoCall(int narg, int nres)
@@ -189,9 +203,11 @@ int CallGlobal(char * global)
 {
     if (lua_getglobal(L, global)==LUA_TFUNCTION) {
         if (DoCall(0,0)!=LUA_OK) {
-            const char *msg = lua_tostring(L,-1);
+            char *msg = CopyString(lua_tostring(L,-1));
             TraceLog(LOG_ERROR,msg); // TODO: this should take you into the error screen
             lua_pop(L,1);
+            ErrorScreen(msg);
+            MemFree(msg);
         }
         return 1;
     } else {
