@@ -108,9 +108,18 @@ static void UpdateDrawFrame(void)
         UnloadDroppedFiles(files);
     }
     int ctrlDown = IsKeyDown(KEY_LEFT_CONTROL)||IsKeyDown(KEY_RIGHT_CONTROL);
-    if (ctrlDown && IsKeyPressed(KEY_F)) {
+    if (ctrlDown && IsKeyPressed(KEY_F)) { // toggle FPS counter
         if (ShouldDrawFPS) ShouldDrawFPS = 0;
         else ShouldDrawFPS = 1;
+    }
+    if (ctrlDown && IsKeyPressed(KEY_R)) { // reset ROM
+        BeginTextureMode(framebuffer);
+            ClearBackground((Color){0});
+        EndTextureMode();
+        CloseLua();
+        InitLua();
+        LoadString(cart->code,cart->code_size);
+        DoCall(0,0);
     }
     BeginTextureMode(framebuffer);
 
