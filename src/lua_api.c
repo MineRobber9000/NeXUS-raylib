@@ -276,7 +276,7 @@ int api_btn(lua_State *L)
 
 int api_epoch(lua_State *L)
 {
-    lua_pushnumber(time(NULL));
+    lua_pushnumber(L,time(NULL));
     return 1;
 }
 
