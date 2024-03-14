@@ -59,6 +59,16 @@ int main(void)
     vm.framebuffer = LoadRenderTexture(screenWidth, screenHeight);
     SetTextureFilter(vm.framebuffer.texture, TEXTURE_FILTER_POINT);
 
+    // Keyboard controls
+    vm.controls.keyboard[0] = KEY_UP;
+    vm.controls.keyboard[1] = KEY_DOWN;
+    vm.controls.keyboard[2] = KEY_LEFT;
+    vm.controls.keyboard[3] = KEY_RIGHT;
+    vm.controls.keyboard[4] = KEY_Z;
+    vm.controls.keyboard[5] = KEY_X;
+    vm.controls.keyboard[6] = KEY_LEFT_SHIFT;
+    vm.controls.keyboard[7] = KEY_ENTER;
+
     // Eight bit color
     eightbitcolor_init();
 

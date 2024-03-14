@@ -254,6 +254,24 @@ int api_trib(lua_State *L)
     return 0;
 }
 
+// INPUT
+
+int api_btn(lua_State *L)
+{
+    if (lua_isnoneornil(L, 1)) {
+        uint8_t btn_state = 0;
+        for (int i=0;i<8;++i) {
+            if (IsKeyDown(vm.controls.keyboard[i])) btn_state |= (1<<i);
+        }
+        lua_pushinteger(L, btn_state);
+        return 1;
+    } else {
+        uint8_t id = luaL_checkinteger(L, 1)&7;
+        lua_pushboolean(L, IsKeyDown(vm.controls.keyboard[id]));
+        return 1;
+    }
+}
+
 // MISC
 
 int api_trace(lua_State *L)
@@ -271,6 +289,7 @@ int api_version(lua_State *L)
 }
 
 struct NeXUS_API api_funcs[] = {
+    {api_btn, "btn"},
     {api_circ, "circ"},
     {api_circb, "circb"},
     {api_clip, "clip"},
