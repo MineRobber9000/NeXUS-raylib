@@ -36,6 +36,15 @@ int api_cls(lua_State *L)
     return 0;
 }
 
+int api_pix(lua_State *L)
+{
+    int64_t x = luaL_checkinteger(L,1);
+    int64_t y = luaL_checkinteger(L,2);
+    uint8_t c = luaL_checkinteger(L,3)&0xFF;
+    DrawPixel(x, y, eightbitcolor_LUT[c]);
+    return 0;
+}
+
 int api_print(lua_State *L)
 {
     const char *str = luaL_checklstring(L,1,0);
@@ -65,6 +74,7 @@ int api_version(lua_State *L)
 
 struct NeXUS_API api_funcs[] = {
     {api_cls, "cls"},
+    {api_pix, "pix"},
     {api_print, "print"},
     {api_textwidth, "textwidth"},
     {api_version, "version"},
