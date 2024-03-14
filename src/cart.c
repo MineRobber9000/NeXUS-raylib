@@ -95,11 +95,20 @@ void FreeGraphics(Cart_GraphicsPage *page) {
 void FreeBlobs(Cart_Blob *blob) {
     if (blob->next) FreeBlobs(blob->next);
     MemFree(blob->data);
+    MemFree(blob);
+}
+
+void FreeSprites(Cart_Sprites *sprite) {
+    if (sprite->next) FreeSprites(sprite->next);
+    UnloadTexture(sprite->texture);
+    UnloadImage(sprite->img);
+    MemFree(sprite);
 }
 
 void FreeCart(Cart *cart) {
     if (cart->code) MemFree(cart->code);
     if (cart->graphics) FreeGraphics(cart->graphics);
     if (cart->blobs) FreeBlobs(cart->blobs);
+    if (cart->sprites) FreeSprites(cart->sprites);
     MemFree(cart);
 }

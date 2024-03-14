@@ -25,11 +25,119 @@ void nullify(const char * global)
 
 // GRAPHICS
 
+int api_circ(lua_State *L)
+{
+    double x = luaL_checknumber(L, 1);
+    double y = luaL_checknumber(L, 2);
+    double rad = luaL_checknumber(L, 3);
+    uint8_t color = luaL_checkinteger(L, 4)&0xFF;
+    DrawCircleV((Vector2){x, y}, rad, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
+    return 0;
+}
+
+int api_circb(lua_State *L)
+{
+    double x = luaL_checknumber(L, 1);
+    double y = luaL_checknumber(L, 2);
+    double rad = luaL_checknumber(L, 3);
+    uint8_t color = luaL_checkinteger(L, 4)&0xFF;
+    DrawCircleLinesV((Vector2){x, y}, rad, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
+    return 0;
+}
+
+int api_clip(lua_State *L)
+{
+    if (lua_isnoneornil(L,1)) {
+        EndScissorMode();
+    } else {
+        int x = luaL_checkinteger(L,1);
+        int y = luaL_checkinteger(L,2);
+        int w = luaL_checkinteger(L,3);
+        int h = luaL_checkinteger(L,4);
+        BeginScissorMode(x,y,w,h);
+    }
+}
+
 int api_cls(lua_State *L)
 {
     uint8_t color = luaL_optinteger(L,1,0)&0xFF;
     ClearBackground(eightbitcolor_LUT[color]);
     if (HAS_SCREEN()) ImageClearBackground(&vm.screen, eightbitcolor_LUT[color]);
+    return 0;
+}
+
+int api_define_spr(lua_State *L)
+{
+    uint32_t grph_id = luaL_checkinteger(L,1);
+    uint32_t x = luaL_checkinteger(L,2);
+    uint32_t y = luaL_checkinteger(L,3);
+    uint32_t w = luaL_checkinteger(L,4);
+    uint32_t h = luaL_checkinteger(L,5);
+    Cart_GraphicsPage *page = vm.cart->graphics;
+    while (page!=NULL && page->id!=grph_id) page = page->next;
+    if (page==NULL) luaL_error(L,"no such graphics page %d",grph_id);
+    if (x<0 || x>page->width) luaL_error(L, "out of bounds X position");
+    if (y<0 || y>page->height) luaL_error(L, "out of bounds Y position");
+    if (w<1) luaL_error(L, "must have at least 1 width");
+    if (h<1) luaL_error(L, "must have at least 1 height");
+    if ((x+w)>page->width) luaL_error(L, "cannot build sprite from X position %d with width %d",x,w);
+    if ((y+h)>page->height) luaL_error(L, "cannot build sprite from Y position %d with height %d",y,h);
+    uint32_t spr_id = 0;
+    if (vm.cart->sprites!=NULL) spr_id = vm.cart->sprites->id + 1;
+    Cart_Sprites *spr = MemAlloc(sizeof(Cart_Sprites));
+    spr->id = spr_id;
+    spr->img = ImageFromImage(page->img,(Rectangle){(float)x, (float)y, (float)w, (float)h});
+    if (!lua_isnoneornil(L, 6)) {
+        uint8_t colorkey = luaL_checkinteger(L, 6)&0xFF;
+        for (int y = 0; y<spr->img.height; ++y) {
+            for (int x = 0; x<spr->img.width; ++x) {
+                uint8_t col = eightbitcolor_nearest(GetImageColor(spr->img, x, y));
+                if (col==colorkey) ImageDrawPixel(&spr->img, x, y, (Color){0});
+            }
+        }
+    }
+    spr->texture = LoadTextureFromImage(spr->img);
+    spr->next = vm.cart->sprites;
+    vm.cart->sprites = spr;
+    lua_pushinteger(L, spr_id);
+    return 1;
+}
+
+int api_line(lua_State *L)
+{
+    uint32_t x1 = (uint32_t)luaL_checknumber(L, 1);
+    uint32_t y1 = (uint32_t)luaL_checknumber(L, 2);
+    uint32_t x2 = (uint32_t)luaL_checknumber(L, 3);
+    uint32_t y2 = (uint32_t)luaL_checknumber(L, 4);
+    uint8_t color = luaL_checkinteger(L, 5)&0xFF;
+    DrawLine(x1, y1, x2, y2, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
+    return 0;
+}
+
+int api_rect(lua_State *L)
+{
+    uint32_t x = (uint32_t)luaL_checknumber(L, 1);
+    uint32_t y = (uint32_t)luaL_checknumber(L, 2);
+    uint32_t w = (uint32_t)luaL_checknumber(L, 3);
+    uint32_t h = (uint32_t)luaL_checknumber(L, 4);
+    uint8_t color = luaL_checkinteger(L, 5)&0xFF;
+    DrawRectangle(x, y, w, h, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
+    return 0;
+}
+
+int api_rectb(lua_State *L)
+{
+    uint32_t x = (uint32_t)luaL_checknumber(L, 1);
+    uint32_t y = (uint32_t)luaL_checknumber(L, 2);
+    uint32_t w = (uint32_t)luaL_checknumber(L, 3);
+    uint32_t h = (uint32_t)luaL_checknumber(L, 4);
+    uint8_t color = luaL_checkinteger(L, 5)&0xFF;
+    DrawRectangleLines(x, y, w, h, eightbitcolor_LUT[color]);
+    vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
     return 0;
 }
 
@@ -89,6 +197,26 @@ int api_print(lua_State *L)
     return 0;
 }
 
+int api_spr(lua_State *L)
+{
+    uint32_t id = luaL_checkinteger(L, 1);
+    uint32_t x = (uint32_t)luaL_checknumber(L, 2);
+    uint32_t y = (uint32_t)luaL_checknumber(L, 3);
+    double scale = luaL_optnumber(L, 4, 1.0f);
+    int flip = luaL_optinteger(L, 5, 0)&3;
+    double rotate = luaL_optnumber(L, 6, 0.0f);
+    Cart_Sprites *spr = vm.cart->sprites;
+    while (spr!=NULL && spr->id!=id) spr = spr->next;
+    if (spr==NULL) luaL_error(L, "invalid sprite %d", id);
+    double sx = scale;
+    double sy = scale;
+    if (flip&1) sx*=-1;
+    if (flip&2) sy*=-1;
+    // TODO: should rotate around origin (requires rlgl because of course it does)
+    DrawTexturePro(spr->texture,(Rectangle){0,0,spr->img.width,spr->img.height},(Rectangle){0,0,spr->img.width*sx,spr->img.height*sy},(Vector2){x,y},0,WHITE);
+    return 0;
+}
+
 int api_textwidth(lua_State *L)
 {
     const char *str = luaL_checklstring(L,1,0);
@@ -97,7 +225,41 @@ int api_textwidth(lua_State *L)
     return 1;
 }
 
+int api_tri(lua_State *L)
+{
+    double x1 = luaL_checknumber(L, 1);
+    double y1 = luaL_checknumber(L, 2);
+    double x2 = luaL_checknumber(L, 3);
+    double y2 = luaL_checknumber(L, 4);
+    double x3 = luaL_checknumber(L, 5);
+    double y3 = luaL_checknumber(L, 6);
+    uint8_t color = luaL_checkinteger(L, 7)&0xFF;
+    DrawTriangle((Vector2){x1, y1}, (Vector2){x2, y2}, (Vector2){x3, y3}, eightbitcolor_LUT[color]);
+    return 0;
+}
+
+int api_trib(lua_State *L)
+{
+    double x1 = luaL_checknumber(L, 1);
+    double y1 = luaL_checknumber(L, 2);
+    double x2 = luaL_checknumber(L, 3);
+    double y2 = luaL_checknumber(L, 4);
+    double x3 = luaL_checknumber(L, 5);
+    double y3 = luaL_checknumber(L, 6);
+    uint8_t color = luaL_checkinteger(L, 7)&0xFF;
+    DrawTriangleLines((Vector2){x1, y1}, (Vector2){x2, y2}, (Vector2){x3, y3}, eightbitcolor_LUT[color]);
+    return 0;
+}
+
 // MISC
+
+int api_trace(lua_State *L)
+{
+    char *message = luaL_checklstring(L,1,0);
+    if (!message) return 0;
+    TraceLog(LOG_INFO,"TRACE: %s",message);
+    return 0;
+}
 
 int api_version(lua_State *L)
 {
@@ -106,10 +268,21 @@ int api_version(lua_State *L)
 }
 
 struct NeXUS_API api_funcs[] = {
+    {api_circ, "circ"},
+    {api_circb, "circb"},
+    {api_clip, "clip"},
     {api_cls, "cls"},
+    {api_define_spr, "define_spr"},
+    {api_line, "line"},
     {api_pix, "pix"},
     {api_print, "print"},
+    {api_rect, "rect"},
+    {api_rectb, "rectb"},
+    {api_spr, "spr"},
     {api_textwidth, "textwidth"},
+    {api_trace, "trace"},
+    {api_tri, "tri"},
+    {api_trib, "trib"},
     {api_version, "version"},
     {0, 0}
 };

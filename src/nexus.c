@@ -131,6 +131,7 @@ static void UpdateDrawFrame(void)
             }
         EndTextureMode();
         CloseLua();
+        if (vm.cart->sprites) FreeSprites(vm.cart->sprites); // free sprites on reset
         InitLua();
         LoadString(vm.cart->code,vm.cart->code_size);
         if (DoCall(0,0)!=LUA_OK) {
@@ -210,6 +211,7 @@ void ErrorScreen(char *msg)
 {
     if (in_error_screen) return;
     in_error_screen = 1;
+    EndScissorMode();
     // Essentially just a custom `doframe()` with some custom API
     // When you reset the ROM it clears out state anyways
     SetGlobalString("msg",msg);
