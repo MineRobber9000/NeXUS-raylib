@@ -1,4 +1,9 @@
 #pragma once
 #include "cart.h"
-extern Font font;
-extern Cart *cart;
+
+typedef struct {
+    Cart *cart;
+    Font font;
+} NeXUS_VM;
+
+extern NeXUS_VM vm;

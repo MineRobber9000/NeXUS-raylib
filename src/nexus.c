@@ -21,8 +21,7 @@
     #include <emscripten/emscripten.h>
 #endif
 
-Font font = { 0 };
-Cart *cart;
+NeXUS_VM vm = { 0 };
 
 //----------------------------------------------------------------------------------
 // Local Variables Definition (local to this module)
@@ -51,8 +50,8 @@ int main(void)
     InitWindow(screenWidth*scale, screenHeight*scale, "NeXUS");
 
     // Load global data (assets that must be available in all screens, i.e. font)
-    font = LoadFont("resources/matchup_pro.png");
-    SetTextureFilter(font.texture, TEXTURE_FILTER_POINT);
+    vm.font = LoadFont("resources/matchup_pro.png");
+    SetTextureFilter(vm.font.texture, TEXTURE_FILTER_POINT);
     SetTextLineSpacing(16);
 
     // Framebuffer
@@ -66,8 +65,8 @@ int main(void)
     InitLua();
 
     // Load nogameloaded.rom and load the code into the VM
-    cart = LoadCart("resources/nogameloaded.rom");
-    LoadString(cart->code,cart->code_size);
+    vm.cart = LoadCart("resources/nogameloaded.rom");
+    LoadString(vm.cart->code,vm.cart->code_size);
     DoCall(0,0);
 
 #if defined(PLATFORM_WEB)
@@ -84,9 +83,9 @@ int main(void)
 #endif
 
     // Unload global data loaded
-    UnloadFont(font);
+    UnloadFont(vm.font);
     UnloadRenderTexture(framebuffer);
-    FreeCart(cart);
+    FreeCart(vm.cart);
     CloseLua();
 
     CloseWindow();          // Close window and OpenGL context
@@ -106,12 +105,12 @@ static void UpdateDrawFrame(void)
         if (files.count==1) {
             TraceLog(LOG_INFO, "LOADER: Loading %s, deinitialize Lua and previous cart",files.paths[0]);
             CloseLua();
-            FreeCart(cart);
+            FreeCart(vm.cart);
             TraceLog(LOG_INFO, "LOADER: Initialize new cart and new Lua");
-            cart = LoadCart(files.paths[0]);
+            vm.cart = LoadCart(files.paths[0]);
             InitLua();
             TraceLog(LOG_INFO, "LOADER: Load and run cart code");
-            LoadString(cart->code,cart->code_size);
+            LoadString(vm.cart->code,vm.cart->code_size);
             if (DoCall(0,0)!=LUA_OK) {
                 const char *msg = lua_tostring(L,-1);
                 TraceLog(LOG_INFO, "LOADER: Lua error: %s",msg); // TODO: this should take you into the error screen
@@ -136,7 +135,7 @@ static void UpdateDrawFrame(void)
         EndTextureMode();
         CloseLua();
         InitLua();
-        LoadString(cart->code,cart->code_size);
+        LoadString(vm.cart->code,vm.cart->code_size);
         DoCall(0,0);
     }
     BeginTextureMode(framebuffer);
@@ -175,5 +174,5 @@ static void _DrawFPS(void)
     if ((fps < 30) && (fps >= 15)) color = ORANGE;  // Warning FPS
     else if (fps < 15) color = RED;             // Low FPS
 
-    DrawTextEx(font, TextFormat("FPS: %2i", fps), (Vector2){1, 1}, 45, 0, color);
+    DrawTextEx(vm.font, TextFormat("FPS: %2i", fps), (Vector2){1, 1}, 45, 0, color);
 }

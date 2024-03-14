@@ -52,7 +52,7 @@ int api_print(lua_State *L)
     int x = luaL_optinteger(L,2,0);
     int y = luaL_optinteger(L,3,0);
     uint8_t color = luaL_optinteger(L,4,0xFF)&0xFF; // default white text
-    DrawTextEx(font, str, (Vector2){x, y}, 15, 0, eightbitcolor_LUT[color]);
+    DrawTextEx(vm.font, str, (Vector2){x, y}, 15, 0, eightbitcolor_LUT[color]);
     return 0;
 }
 
@@ -60,7 +60,7 @@ int api_textwidth(lua_State *L)
 {
     const char *str = luaL_checklstring(L,1,0);
     if (!str) return 0;
-    lua_pushinteger(L, MeasureTextEx(font, str, 15, 0).x);
+    lua_pushinteger(L, MeasureTextEx(vm.font, str, 15, 0).x);
     return 1;
 }
 
