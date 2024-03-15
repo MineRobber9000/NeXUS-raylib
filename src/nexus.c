@@ -141,7 +141,10 @@ static void UpdateDrawFrame(void)
             }
         EndTextureMode();
         CloseLua();
-        if (vm.cart->sprites) FreeSprites(vm.cart->sprites); // free sprites on reset
+        if (vm.cart->sprites) {
+            FreeSprites(vm.cart->sprites); // free sprites on reset
+            vm.cart->sprites = NULL;
+        }
         InitLua();
         LoadString(vm.cart->code,vm.cart->code_size);
         if (DoCall(0,0)!=LUA_OK) {
