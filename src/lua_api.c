@@ -200,8 +200,8 @@ int api_print(lua_State *L)
 int api_spr(lua_State *L)
 {
     uint32_t id = luaL_checkinteger(L, 1);
-    uint32_t x = (uint32_t)luaL_checknumber(L, 2);
-    uint32_t y = (uint32_t)luaL_checknumber(L, 3);
+    double x = luaL_checknumber(L, 2);
+    double y = luaL_checknumber(L, 3);
     double scale = luaL_optnumber(L, 4, 1.0f);
     int flip = luaL_optinteger(L, 5, 0)&3;
     double rotate = luaL_optnumber(L, 6, 0.0f);
@@ -212,8 +212,11 @@ int api_spr(lua_State *L)
     double sy = scale;
     if (flip&1) sx*=-1;
     if (flip&2) sy*=-1;
-    // TODO: should rotate around origin (requires rlgl because of course it does)
-    DrawTexturePro(spr->texture,(Rectangle){0,0,spr->img.width,spr->img.height},(Rectangle){0,0,spr->img.width*sx,spr->img.height*sy},(Vector2){x,y},0,WHITE);
+    double width = spr->img.width * sx;
+    double height = spr->img.width * sy;
+    double halfwidth = (width/2.0f);
+    double halfheight = (height/2.0f);
+    DrawTexturePro(spr->texture,(Rectangle){0,0,spr->img.width,spr->img.height},(Rectangle){x+halfwidth,y+halfheight,width,height},(Vector2){halfwidth,halfheight},rotate,WHITE);
     vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen? probably not in this case
     return 0;
 }
