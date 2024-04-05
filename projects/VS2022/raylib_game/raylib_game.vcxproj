@@ -196,7 +196,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\build\raylib\bin\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>raylib.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winmm.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>/raylib.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winmm.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug.DLL|Win32'">
@@ -387,10 +387,12 @@
     <ClCompile Include="..\..\..\src\lua\lzio.c" />
     <ClCompile Include="..\..\..\src\lua_api.c" />
     <ClCompile Include="..\..\..\src\nexus.c" />
+    <ClCompile Include="..\..\..\src\audio.c" />
     <ClCompile Include="..\..\..\src\riff.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\eightbitcolor.h" />
+    <ClInclude Include="..\..\..\src\audio.h" />
     <ClInclude Include="..\..\..\src\lua\lapi.h" />
     <ClInclude Include="..\..\..\src\lua\lauxlib.h" />
     <ClInclude Include="..\..\..\src\lua\lcode.h" />

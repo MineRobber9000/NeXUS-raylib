@@ -16,6 +16,7 @@
 #include "eightbitcolor.h"
 #include "lua_api.h"
 #include "nexus.h"
+#include "audio.h"
 
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
@@ -68,6 +69,10 @@ int main(void)
     vm.controls.keyboard[5] = KEY_X;
     vm.controls.keyboard[6] = KEY_LEFT_SHIFT;
     vm.controls.keyboard[7] = KEY_ENTER;
+
+    // Audio stream
+    AudioStream stream = LoadAudioStream(11025, 8, 1);
+    SetAudioStreamCallback(stream, audio_callback);
 
     // Eight bit color
     eightbitcolor_init();
