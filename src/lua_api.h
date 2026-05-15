@@ -11,7 +11,7 @@ int LoadString(char * code, size_t len);
 int DoCall(int nargs, int nres);
 int CallGlobal(char * global);
 
-char * CopyString(char * from);
+char * CopyString(const char * from);
 struct NeXUS_API {
     lua_CFunction func;
     const char * name;

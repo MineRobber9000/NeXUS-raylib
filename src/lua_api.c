@@ -58,6 +58,7 @@ int api_clip(lua_State *L)
         int h = luaL_checkinteger(L,4);
         BeginScissorMode(x,y,w,h);
     }
+    return 0;
 }
 
 int api_cls(lua_State *L)
@@ -288,14 +289,14 @@ int api_get_resource(lua_State *L)
     uint32_t id = luaL_checkinteger(L, 1);
     Cart_Blob *blob = vm.cart->blobs;
     while (blob!=NULL && blob->id!=id) blob = blob->next;
-    if (blob==NULL) luaL_error("no such resource %d", id);
+    if (blob==NULL) luaL_error(L, "no such resource %d", id);
     lua_pushlstring(L, blob->data, blob->size);
     return 1;
 }
 
 int api_trace(lua_State *L)
 {
-    char *message = luaL_checklstring(L,1,0);
+    const char *message = luaL_checklstring(L,1,0);
     if (!message) return 0;
     TraceLog(LOG_INFO,"TRACE: %s",message);
     return 0;

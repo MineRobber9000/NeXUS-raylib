@@ -220,7 +220,7 @@ const char * error_screen =
 
 static int in_error_screen = 0;
 
-void ErrorScreen(char *msg)
+void ErrorScreen(const char *msg)
 {
     if (in_error_screen) return;
     in_error_screen = 1;
@@ -231,7 +231,7 @@ void ErrorScreen(char *msg)
     for (struct NeXUS_API *func = error_screen_funcs; func->func; ++func) {
         RegisterFunction(func);
     }
-    if (LoadString(error_screen,strlen(error_screen))>0) {
+    if (LoadString((char *)error_screen,strlen(error_screen))>0) {
         TraceLog(LOG_ERROR,"ERROR: Meta error: %s",lua_tostring(L,-1));
         lua_pop(L,1);
         vm.should_close = 1;
