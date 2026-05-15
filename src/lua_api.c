@@ -2,6 +2,7 @@
 #include "eightbitcolor.h"
 #include "rlgl.h"
 #include "lua_api.h"
+#include "saves.h"
 
 lua_State *L;
 
@@ -258,6 +259,73 @@ int api_trib(lua_State *L)
     return 0;
 }
 
+// SAVES
+
+int api_delete_save(lua_State *L)
+{
+    char *savename = (char *)luaL_checklstring(L, 1, 0);
+    lua_pushboolean(L, saves_delete(savename));
+    return 1;
+}
+
+int api_list_saves(lua_State *L)
+{
+    char *pattern = (char *)luaL_optlstring(L, 1, NULL, NULL);
+    NeXUS_SaveList savelist = saves_list(pattern);
+    if (savelist.error) {
+        if (savelist.files.count) UnloadDirectoryFiles(savelist.files);
+        return luaL_error(L, "pattern error: %s", savelist.error);
+    }
+    lua_createtable(L, savelist.files.count, 0);
+    for (int i=0;i<savelist.files.count;++i) {
+        lua_pushstring(L, savelist.files.paths[i]);
+        lua_rawseti(L, -2, i+1);
+    }
+    UnloadDirectoryFiles(savelist.files);
+    return 1;
+}
+
+int api_load_save(lua_State *L)
+{
+    char *savename = (char *)luaL_checklstring(L, 1, 0);
+    NeXUS_Save save = saves_load(savename);
+    if (save.error) {
+        if (save.data) MemFree(save.data);
+        return luaL_error(L, "error loading save: %s");
+    }
+    if (save.len==0 || !save.data) {
+        lua_pushliteral(L, "");
+        if (save.data) MemFree(save.data);
+        return 1;
+    }
+    lua_pushlstring(L, (char *)save.data, save.len);
+    MemFree(save.data);
+    return 1;
+}
+
+int api_save_exists(lua_State *L)
+{
+    char *savename = (char *)luaL_checklstring(L, 1, 0);
+    lua_pushboolean(L, saves_exist(savename));
+    return 1;
+}
+
+int api_save_file(lua_State *L)
+{
+    char *savename = (char *)luaL_checklstring(L, 1, 0);
+    NeXUS_Save save = { 0 };
+    save.data = (uint8_t *)luaL_checklstring(L, 2, &save.len);
+    lua_pushboolean(L, saves_save(savename, save));
+    return 1;
+}
+
+int api_valid_save(lua_State *L)
+{
+    char *savename = (char *)luaL_checklstring(L, 1, 0);
+    lua_pushboolean(L, saves_check(savename));
+    return 1;
+}
+
 // INPUT
 
 int api_btn(lua_State *L)
@@ -315,18 +383,24 @@ struct NeXUS_API api_funcs[] = {
     {api_clip, "clip"},
     {api_cls, "cls"},
     {api_define_spr, "define_spr"},
+    {api_delete_save, "delete_save"},
     {api_epoch, "epoch"},
     {api_get_resource, "get_resource"},
     {api_line, "line"},
+    {api_list_saves, "list_saves"},
+    {api_load_save, "load_save"},
     {api_pix, "pix"},
     {api_print, "print"},
     {api_rect, "rect"},
     {api_rectb, "rectb"},
+    {api_save_exists, "save_exists"},
+    {api_save_file, "save_file"},
     {api_spr, "spr"},
     {api_textwidth, "textwidth"},
     {api_trace, "trace"},
     {api_tri, "tri"},
     {api_trib, "trib"},
+    {api_valid_save, "valid_save"},
     {api_version, "version"},
     {0, 0}
 };
