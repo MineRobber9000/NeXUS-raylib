@@ -10,7 +10,7 @@ because holy cow it's a really good font go support Eeve you won't regret it.
 
 Don't. (Right now.)
 
-Use the solution in the `projects/VS2022` directory to build if on Windows, otherwise use `make` in the `src` directory.
+Use cmake. It should Just Work:tm:.
 
 [Matchup Pro]: https://somepx.itch.io/humble-fonts-free "links to the Humble Fonts Free collection which contains Matchup Pro"
 [Eeve Somepx]: https://twitter.com/somepx
