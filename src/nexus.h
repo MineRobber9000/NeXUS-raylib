@@ -13,6 +13,7 @@ typedef struct {
     int should_close;
     Font font;
     Controls controls;
+    AudioStream pcm_stream;
 } NeXUS_VM;
 
 extern NeXUS_VM vm;

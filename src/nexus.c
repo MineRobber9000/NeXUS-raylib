@@ -69,6 +69,10 @@ int main(void)
     vm.controls.keyboard[6] = KEY_LEFT_SHIFT;
     vm.controls.keyboard[7] = KEY_ENTER;
 
+    // PCM stream
+    InitAudioDevice();
+    SetAudioStreamBufferSizeDefault(128);
+
     // Eight bit color
     eightbitcolor_init();
 

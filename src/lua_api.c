@@ -3,6 +3,7 @@
 #include "rlgl.h"
 #include "lua_api.h"
 #include "saves.h"
+#include "pcm.h"
 
 lua_State *L;
 
@@ -326,6 +327,63 @@ int api_valid_save(lua_State *L)
     return 1;
 }
 
+// SOUND
+
+int api_pcm_queue(lua_State *L)
+{
+    luaL_checktype(L, 1, LUA_TTABLE);
+    if (!pcm_ready()) {
+        lua_pushboolean(L, false);
+        return 1;
+    }
+    // get length
+    lua_len(L, 1);
+    size_t len = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    // allocate space for samples
+    uint8_t *samples = (uint8_t *)MemAlloc(len);
+    // now iterate over the table
+    size_t i=1;
+    while (i<=len && lua_geti(L, 1, i)!=LUA_TNIL) {
+        lua_Integer sample_raw = lua_tointeger(L, -1);
+        lua_pop(L, 1);
+        uint8_t sample = (uint8_t)(sample_raw&0xFF) ^ 0x80;
+        samples[i++ - 1] = sample;
+    }
+    // if (i<=len) is still true this means we bailed early due to an extraneous nil, pop it
+    if (i<=len) {
+        lua_pop(L, 1);
+        // truncate to the actual length of prepared samples (last sample we actually set)
+        len = i-1;
+    }
+    lua_pushboolean(L, pcm_queue(samples, len));
+    return 1;
+}
+
+int api_pcm_ready(lua_State *L)
+{
+    lua_pushboolean(L, pcm_ready());
+    return 1;
+}
+
+int api_pcm_start(lua_State *L)
+{
+    pcm_start();
+    return 0;
+}
+
+int api_pcm_stop(lua_State *L)
+{
+    pcm_stop();
+    return 0;
+}
+
+int api_pcm_clear(lua_State *L)
+{
+    pcm_clear();
+    return 0;
+}
+
 // INPUT
 
 int api_btn(lua_State *L)
@@ -389,6 +447,11 @@ struct NeXUS_API api_funcs[] = {
     {api_line, "line"},
     {api_list_saves, "list_saves"},
     {api_load_save, "load_save"},
+    {api_pcm_clear, "pcm_clear"},
+    {api_pcm_queue, "pcm_queue"},
+    {api_pcm_ready, "pcm_ready"},
+    {api_pcm_start, "pcm_start"},
+    {api_pcm_stop, "pcm_stop"},
     {api_pix, "pix"},
     {api_print, "print"},
     {api_rect, "rect"},
