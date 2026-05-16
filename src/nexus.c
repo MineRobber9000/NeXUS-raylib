@@ -253,7 +253,7 @@ int api_print_screenbox(lua_State *L)
 {
     const char *str = luaL_checklstring(L,1,0);
     if (!str) return 0;
-    DrawTextBoxed(vm.font, str, (Rectangle){0, 0, 320, 240}, 15, 0, true, eightbitcolor_LUT[255]);
+    DrawTextBoxed(vm.font, str, (Rectangle){1, 1, 318, 238}, 15, 0, true, eightbitcolor_LUT[255]);
     vm.screen_dirty = 1; // is it worth it to duplicate on vm.screen?
     return 0;
 }
